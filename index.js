@@ -33,7 +33,7 @@ app.use(session({
 }))
 
 //  flash中間件,用來顯示通知
-// app.use(flash()) 暫時還不能用，待解決**
+// app.use(flash()) // *** 錯誤，待處理 ***
 
 //  路由
 routes(app)
