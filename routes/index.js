@@ -1,7 +1,6 @@
-
 module.exports = function (app) {
   app.get('/', function (req, res) {
-    app.render('/posts')
+    res.redirect('/posts')
   })
   app.use('/signup', require('./signup'))
   app.use('/signin', require('./signin'))
