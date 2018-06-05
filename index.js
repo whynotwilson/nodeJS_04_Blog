@@ -1,9 +1,9 @@
 const path = require('path') //
 const express = require('express')
 const session = require('express-session')
-const MongoStore = require('connect-mongo')(session)
-const flash = require('connect-flash')(__dirname)
 const config = require('config-lite')(__dirname)
+const MongoStore = require('connect-mongo')(session)
+const flash = require('connect-flash')
 const routes = require('./routes')
 const pkg = require('./package')
 const app = express()
@@ -22,7 +22,7 @@ app.use(session({
   name: config.session.key, //  設置 cookie 中保存session id 的字段名稱
   secret: config.session.secret, //  通過設置 secret 來計算 hash 值並放在cookie中，使產生的signedCookie防竄改
   resave: true, //  強制更新 session
-  saveUninitialized: false, //  設置為 false, 強置創建一個session,即使用戶未登錄
+  saveUninitialized: true, //  設置為 false, 強置創建一個session,即使用戶未登錄
   cookie: {
     maxAge: config.session.maxAge //  過期時間,過期後cookie中的session id自動刪除
   },
@@ -33,7 +33,27 @@ app.use(session({
 }))
 
 //  flash中間件,用來顯示通知
-// app.use(flash()) // *** 錯誤，待處理 ***
+app.use(flash())
+
+// 處理表單及文件上傳的中間件
+app.use(require('express-formidable')({
+  uploadDir: path.join(__dirname, 'public/img'), // 上傳文件目錄
+  keepExtensions: true // 保留後綴
+}))
+
+// 設置模板全局常數
+app.locals.blog = {
+  title: pkg.name,
+  description: pkg.description
+}
+
+// 添加模板必須的三個變量
+app.use(function (req, res, next) {
+  res.locals.user = req.session.user
+  res.locals.success = req.flash('success')
+  res.locals.error = req.flash('error')
+  next()
+})
 
 //  路由
 routes(app)
