@@ -6,7 +6,15 @@ const PostModel = require('../models/posts')
 // GET /posts 所有用戶或者特定用戶的文章頁
 // eg: GET /posts?author=???
 router.get('/', function (req, res, next) {
-  res.render('posts')
+  const author = req.query.author
+
+  PostModel.getPosts(author)
+    .then(function (posts) {
+      res.render('posts', {
+        posts: posts
+      })
+    })
+    .catch(next)
 })
 
 // POST /posts/create 發表一篇文章
