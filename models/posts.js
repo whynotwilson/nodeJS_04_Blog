@@ -52,5 +52,23 @@ module.exports = {
     return Post
       .update({_id: postId}, {$inc: { pv: 1 }})
       .exec()
+  },
+
+  // 通過文章 id 獲取一篇原生文章(編輯文章)
+  getRawPostById: function getRawPostById (postId) {
+    return Post
+      .findOne({ _id: postId })
+      .populate({path: 'author', model: 'User'})
+      .exec()
+  },
+
+  // 通過文章 id 更新一篇文章
+  updatePostById: function updatePostById (postId, data) {
+    return Post.update({_id: postId}, {$set: data}).exec()
+  },
+
+  // 通過文章 id 刪除一篇文章
+  delPostById: function delPostById (postId) {
+    return Post.deleteOne({_id: postId}).exec()
   }
 }

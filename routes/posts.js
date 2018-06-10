@@ -64,13 +64,84 @@ router.get('/:postId', function (req, res, next) {
 })
 
 // GET /posts/:postId/edit 編輯文章頁
-router.get('/posts/:postId/edit', function (req, res, next) {
-  res.send('編輯文章頁')
+router.get('/posts/:postId/edit', checkLogin, function (req, res, next) {
+  const postId = req.params.postId
+  const author = req.session.user._id
+
+  PostModel.getRawPostById(postId)
+    .then(function (post) {
+      if (!post) {
+        throw new Error('該文章不存在')
+      }
+      if (author.toString() !== post.author._id.toString()) {
+        throw new Error('權限不足')
+      }
+      res.render('edit', {
+        post: post
+      })
+    })
+    .catch(next)
+})
+
+// Post /posts/:postId/edit 編輯一篇文章
+router.post('/:postId/edit', checkLogin, function (req, res, next) {
+  const postId = req.params.postId
+  const author = req.session.user._id
+  const title = req.fields.title
+  const content = req.fields.content
+
+  // 檢查參數
+  try {
+    if (!title.length) {
+      throw new Error('請填寫標題')
+    }
+    if (!content.length) {
+      throw new Error('請填寫內容')
+    }
+  } catch (e) {
+    req.flash('error', e.message)
+    return res.redirect('back')
+  }
+
+  PostModel.getRawPostById(postId)
+    .then(function (post) {
+      if (!post) {
+        throw new Error('文章不存在')
+      }
+      if (post.author._id.toString() !== author.toString()) {
+        throw new Error('沒有權限')
+      }
+      PostModel.updatePostById(postId, {title: title, content: content})
+        .then(function () {
+          req.flash('success', '編輯文章成功')
+          // 編輯成功後跳轉到上一頁
+          res.redirect(`/posts/${postId}`)
+        })
+        .catch(next)
+    })
 })
 
 // GET /posts/:postId/remove 刪除一篇文章
 router.get('/:postId/remove', checkLogin, function (req, res, next) {
-  res.send('刪除文章')
+  const postId = req.params.postId
+  const author = req.session.user._id
+
+  PostModel.getRawPostById(postId)
+    .then(function (post) {
+      if (!post) {
+        throw new Error('文章不存在')
+      }
+      if (post.author._id.toString() !== author.toString()) {
+        throw new Error('沒有權限')
+      }
+      PostModel.delPostById(postId)
+        .then(function () {
+          req.flash('success', '刪除文章成功')
+          // 刪除成功後跳轉到主頁
+          res.redirect('/posts')
+        })
+        .catch(next)
+    })
 })
 
 module.exports = router
