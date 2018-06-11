@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const checkLogin = require('../middlewares/check').checkLogin
 const PostModel = require('../models/posts')
+const CommentModel = require('../models/comments')
 
 // GET /posts 所有用戶或者特定用戶的文章頁
 // eg: GET /posts?author=???
@@ -60,7 +61,26 @@ router.get('create', checkLogin, function (req, res, next) {
 
 // GET /posts/:postId 單獨一篇的文章頁
 router.get('/:postId', function (req, res, next) {
-  res.send('文章詳情頁')
+  const postId = req.params.postId
+
+  Promise.all([
+    PostModel.getPostById(postId), // 獲取文章資訊
+    CommentModel.getComments(postId), // 獲取該文章所有留言
+    PostModel.incPv(postId) // pv 加 1
+  ])
+    .then(function (result) {
+      const post = result[0]
+      const comments = result[1]
+      if (!post) {
+        throw new Error('該文章不存在')
+      }
+
+      res.render('post', {
+        post: post,
+        comments: comments
+      })
+    })
+    .catch(next)
 })
 
 // GET /posts/:postId/edit 編輯文章頁
