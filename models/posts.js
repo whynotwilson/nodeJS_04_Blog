@@ -82,7 +82,6 @@ module.exports = {
   }
 }
 
-const Post = require('../lib/mongo').Post
 const CommentModel = require('./comments')
 
 // 給 post 添加留言數 commentsCount

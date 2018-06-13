@@ -8,6 +8,9 @@ const routes = require('./routes')
 const pkg = require('./package')
 const app = express()
 
+const winston = require('winston')
+const expressWinston = require('express-winston')
+
 //  設置模版目錄
 app.set('views', path.join(__dirname, 'views'))
 
@@ -55,8 +58,44 @@ app.use(function (req, res, next) {
   next()
 })
 
-//  路由
+// 記錄正常請求日誌的中間件要放到 routes(app) 之前，
+// 記錄錯誤請求日誌的中間件要放到 routes(app) 之後。
+
+// 正常請求的日誌
+app.use(expressWinston.logger({
+  transports: [
+    new (winston.transports.Console)({
+      json: true,
+      colorize: true
+    }),
+    new winston.transports.File({
+      filename: 'logs/success.log'
+    })
+  ]
+}))
+
+// 路由
 routes(app)
+
+// 錯誤請求的日誌
+app.use(expressWinston.errorLogger({
+  transports: [
+    new winston.transports.Console({
+      json: true,
+      colorize: true
+    }),
+    new winston.transports.File({
+      filename: 'logs/error.log'
+    })
+  ]
+}))
+
+// 錯誤(沒有權限)時用頁面通知展示
+app.use(function (err, req, res, next) {
+  console.errer(err)
+  req.flash('error', err.message)
+  res.redirect('/posts')
+})
 
 //  監聽端口，啟動程序
 app.listen(config.port, function () {
