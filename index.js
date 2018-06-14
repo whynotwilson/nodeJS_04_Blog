@@ -99,7 +99,11 @@ app.use(function (err, req, res, next) {
 
 //  監聽端口，啟動程序
 app.listen(config.port, function () {
-  console.log(`$  { pkg.name } listening on port $  { config.port }`)
+  if (module.parent) {
+    module.exports = app
+  } else {
+    console.log(`${pkg.name} listening on port ${config.port}`)
+  }
 })
 
 //  中間件的加載順序很重要。
